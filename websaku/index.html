@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Saku — Catatan Uang Saku Anak Kost</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1A1A17;
+    --paper:#F3ECDD;
+    --paper-deep:#EAE1CB;
+    --line:#D9CEB4;
+    --teal:#1F4B44;
+    --teal-deep:#153531;
+    --brass:#B98B4E;
+    --sage:#4F7A5C;
+    --rust:#B5533C;
+    --paper-white:#FBF8F0;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper-deep);
+    font-family:'Plus Jakarta Sans', sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'JetBrains Mono', monospace;}
+  .hand{font-family:'Kalam', cursive;}
+
+  .book{
+    max-width:760px;
+    margin:28px auto;
+    background:var(--paper);
+    border-radius:6px;
+    position:relative;
+    box-shadow:0 18px 40px -20px rgba(21,53,49,0.45), 0 2px 0 rgba(0,0,0,0.05);
+    overflow:hidden;
+    display:flex;
+  }
+  .spine{
+    width:26px;
+    background:linear-gradient(180deg, var(--teal), var(--teal-deep));
+    flex-shrink:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:20px 0;
+    gap:16px;
+  }
+  .spine .ring{
+    width:10px;height:10px;border-radius:50%;
+    background:var(--paper-deep);
+    box-shadow:inset 0 1px 2px rgba(0,0,0,0.4);
+  }
+  .content{flex:1; min-width:0;}
+
+  header.top{
+    padding:22px 26px 14px;
+    background:var(--teal);
+    color:var(--paper-white);
+    position:relative;
+  }
+  header.top .brand{
+    font-family:'Kalam', cursive;
+    font-weight:700;
+    font-size:28px;
+    letter-spacing:0.5px;
+  }
+  header.top .brand span{color:var(--brass);}
+  header.top .sub{
+    font-size:12.5px;
+    opacity:0.75;
+    margin-top:2px;
+  }
+  .month-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-top:14px;
+  }
+  select#monthSelect{
+    background:rgba(255,255,255,0.1);
+    border:1px solid rgba(255,255,255,0.25);
+    color:var(--paper-white);
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    padding:6px 10px;
+    border-radius:5px;
+  }
+  select#monthSelect option{color:var(--ink);}
+
+  .balance-band{
+    padding:20px 26px;
+    background:var(--paper-white);
+    border-bottom:2px dashed var(--line);
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .gauge-wrap{position:relative; width:96px; height:96px; flex-shrink:0;}
+  .gauge-wrap svg{transform:rotate(-90deg);}
+  .gauge-label{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    font-weight:600;
+    color:var(--teal-deep);
+  }
+  .balance-text .lbl{
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:1.2px;
+    color:#8a8272;
+    font-weight:600;
+  }
+  .balance-text .amt{
+    font-family:'Kalam', cursive;
+    font-weight:700;
+    font-size:34px;
+    color:var(--teal-deep);
+    line-height:1.15;
+    margin-top:2px;
+  }
+  .balance-text .amt.neg{color:var(--rust);}
+
+  .stats-row{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    border-bottom:2px dashed var(--line);
+  }
+  .stat{
+    padding:14px 16px;
+    text-align:center;
+    border-right:1px solid var(--line);
+  }
+  .stat:last-child{border-right:none;}
+  .stat .k{font-size:10.5px; text-transform:uppercase; letter-spacing:1px; color:#8a8272; font-weight:600;}
+  .stat .v{font-family:'JetBrains Mono', monospace; font-weight:600; font-size:15px; margin-top:4px;}
+  .stat.in .v{color:var(--sage);}
+  .stat.out .v{color:var(--rust);}
+  .stat.budget .v{color:var(--brass);}
+  .stat.budget.over .v{color:var(--rust);}
+
+  form#txForm{
+    padding:18px 26px;
+    border-bottom:2px dashed var(--line);
+    background:var(--paper);
+  }
+  form#txForm .row1{display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;}
+  .toggle-type{
+    display:flex; border-radius:6px; overflow:hidden; border:1px solid var(--line); flex-shrink:0;
+  }
+  .toggle-type button{
+    border:none; background:var(--paper-white); padding:9px 14px;
+    font-family:'Plus Jakarta Sans'; font-size:12.5px; font-weight:600; cursor:pointer; color:#8a8272;
+  }
+  .toggle-type button.active[data-type="masuk"]{background:var(--sage); color:white;}
+  .toggle-type button.active[data-type="keluar"]{background:var(--rust); color:white;}
+  input, select.field{
+    font-family:'Plus Jakarta Sans';
+    font-size:13px;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:6px;
+    background:var(--paper-white);
+    color:var(--ink);
+  }
+  input#amount{width:140px; font-family:'JetBrains Mono'; font-weight:600;}
+  input#note{flex:1; min-width:120px;}
+  select.field{min-width:120px;}
+  form#txForm .row2{display:flex; gap:8px; flex-wrap:wrap;}
+  input#dateInput{width:140px;}
+  button#addBtn{
+    background:var(--teal);
+    color:white;
+    border:none;
+    padding:9px 18px;
+    border-radius:6px;
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+    font-family:'Plus Jakarta Sans';
+  }
+  button#addBtn:hover{background:var(--teal-deep);}
+
+  .budget-set{
+    padding:10px 26px;
+    font-size:12px;
+    color:#8a8272;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--paper);
+  }
+  .budget-set input{width:120px; font-family:'JetBrains Mono'; font-size:12px; padding:5px 8px;}
+  .budget-set button{
+    border:none; background:none; color:var(--teal); font-weight:700; cursor:pointer; font-size:12px;
+    text-decoration:underline;
+  }
+
+  .ledger{
+    padding:16px 26px 8px;
+  }
+  .ledger h3, .cat-section h3{
+    font-family:'Kalam', cursive;
+    font-size:18px;
+    color:var(--teal-deep);
+    margin:0 0 10px;
+  }
+  .filters{
+    display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap;
+  }
+  .filters button{
+    border:1px solid var(--line);
+    background:var(--paper-white);
+    padding:5px 11px;
+    border-radius:14px;
+    font-size:11.5px;
+    cursor:pointer;
+    color:#8a8272;
+    font-family:'Plus Jakarta Sans';
+  }
+  .filters button.active{background:var(--teal); color:white; border-color:var(--teal);}
+
+  .tx-row{
+    display:flex;
+    align-items:center;
+    padding:10px 2px;
+    border-bottom:1px dashed var(--line);
+    gap:10px;
+  }
+  .tx-row:last-child{border-bottom:none;}
+  .tx-date{
+    font-family:'JetBrains Mono';
+    font-size:11px;
+    color:#8a8272;
+    width:52px;
+    flex-shrink:0;
+  }
+  .tx-mid{flex:1; min-width:0;}
+  .tx-note{font-size:13.5px; font-weight:600;}
+  .tx-cat{font-size:11px; color:#8a8272; margin-top:1px;}
+  .tx-amt{
+    font-family:'JetBrains Mono';
+    font-weight:700;
+    font-size:13.5px;
+    flex-shrink:0;
+  }
+  .tx-amt.in{color:var(--sage);}
+  .tx-amt.out{color:var(--rust);}
+  .tx-del{
+    background:none; border:none; cursor:pointer; color:#c9bfa5; font-size:15px; padding:2px 4px;
+  }
+  .tx-del:hover{color:var(--rust);}
+  .empty-state{
+    text-align:center; padding:28px 10px; color:#a89f8a; font-size:13px;
+  }
+  .empty-state .hand{font-size:20px; display:block; margin-bottom:6px; color:var(--teal);}
+
+  .cat-section{padding:6px 26px 26px;}
+  .tally-row{margin-bottom:10px;}
+  .tally-top{display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;}
+  .tally-top .name{font-weight:600;}
+  .tally-top .amt{font-family:'JetBrains Mono'; color:#8a8272;}
+  .tally-bar{height:7px; border-radius:4px; background:var(--line); overflow:hidden;}
+  .tally-fill{height:100%; background:var(--brass); border-radius:4px;}
+
+  footer.foot{
+    padding:14px 26px 22px;
+    font-size:11px;
+    color:#a89f8a;
+    text-align:center;
+    font-family:'JetBrains Mono';
+  }
+
+  @media (max-width:520px){
+    .book{margin:0; border-radius:0; min-height:100vh;}
+    .balance-band{flex-direction:column; align-items:flex-start;}
+    input#note{width:100%;}
+  }
+
+  :focus-visible{outline:2px solid var(--brass); outline-offset:2px;}
+</style>
+</head>
+<body>
+
+<!-- Auth overlay -->
+<div id="authOverlay" style="position:fixed; inset:0; background:rgba(21,53,49,0.55); display:flex; align-items:center; justify-content:center; padding:18px; z-index:9999;">
+  <div id="authCard" style="width:100%; max-width:420px; background:var(--paper); border-radius:10px; box-shadow:0 18px 40px -20px rgba(21,53,49,0.45); overflow:hidden;">
+    <div style="background:var(--teal); color:var(--paper-white); padding:18px 20px;">
+      <div style="font-family:'Kalam', cursive; font-weight:700; font-size:22px;">Saku<span style="color:var(--brass);">.</span> Login</div>
+      <div style="font-size:12.5px; opacity:0.85; margin-top:2px;">Akses dibuka setelah verifikasi.</div>
+    </div>
+
+    <div style="padding:18px 20px;">
+      <div id="authError" style="display:none; background:rgba(181,83,60,0.12); color:var(--rust); border:1px solid rgba(181,83,60,0.35); padding:10px 12px; border-radius:8px; font-size:13px; font-weight:600; margin-bottom:12px;"></div>
+
+      <div id="authModeWrap">
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+          <button id="tabLogin" type="button" class="toggleTab" style="flex:1; border:1px solid var(--line); background:var(--paper-white); padding:9px 12px; border-radius:8px; cursor:pointer; font-family:'Plus Jakarta Sans'; font-weight:700; font-size:13px; color:#8a8272;" data-mode="login">Login</button>
+          <button id="tabSignup" type="button" class="toggleTab" style="flex:1; border:1px solid var(--line); background:transparent; padding:9px 12px; border-radius:8px; cursor:pointer; font-family:'Plus Jakarta Sans'; font-weight:700; font-size:13px; color:#8a8272;" data-mode="signup">Buat Akun</button>
+        </div>
+
+        <form id="authForm">
+          <div class="row1" style="display:flex; gap:10px; flex-wrap:wrap;">
+            <div style="flex:1; min-width:150px;">
+              <input id="authUsername" type="text" placeholder="Username" required style="width:100%;">
+            </div>
+          </div>
+
+          <div style="height:10px;"></div>
+
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <div style="flex:1; min-width:150px;">
+              <input id="authPassword" type="password" placeholder="Password" required style="width:100%;">
+            </div>
+          </div>
+
+          <div id="signupPasswordRow" style="display:none; margin-top:10px;">
+            <input id="authPassword2" type="password" placeholder="Ulangi Password" style="width:100%;">
+          </div>
+
+          <div style="display:flex; gap:10px; margin-top:14px;">
+            <button id="authSubmitBtn" type="submit" style="flex:1; border:none; background:var(--teal); color:white; padding:10px 14px; border-radius:8px; font-weight:800; cursor:pointer; font-family:'Plus Jakarta Sans';">Masuk</button>
+            <button id="authCancelBtn" type="button" style="border:1px solid var(--line); background:var(--paper-white); color:#8a8272; padding:10px 14px; border-radius:8px; font-weight:800; cursor:pointer; font-family:'Plus Jakarta Sans';">Batal</button>
+          </div>
+
+          <div id="authHint" style="margin-top:12px; font-size:12.5px; color:#8a8272; line-height:1.35;">
+            <span class="mono">Catatan:</span> data akun disimpan di perangkat ini.
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="book">
+  <div class="spine">
+    <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+    <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+    <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+  </div>
+  <div class="content">
+    <header class="top">
+      <div class="brand">Saku<span>.</span></div>
+      <div class="sub">Buku kas digital anak kost</div>
+      <div class="month-row">
+        <select id="monthSelect"></select>
+      </div>
+    </header>
+
+    <div class="balance-band">
+      <div class="gauge-wrap">
+        <svg width="96" height="96" viewBox="0 0 96 96">
+          <circle cx="48" cy="48" r="40" fill="none" stroke="#E3D9BF" stroke-width="10"/>
+          <circle id="gaugeArc" cx="48" cy="48" r="40" fill="none" stroke="#B98B4E" stroke-width="10" stroke-linecap="round" stroke-dasharray="251" stroke-dashoffset="251"/>
+        </svg>
+        <div class="gauge-label" id="gaugeLabel">0%</div>
+      </div>
+      <div class="balance-text">
+        <div class="lbl">Sisa saku bulan ini</div>
+        <div class="amt" id="balanceAmt">Rp 0</div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat in"><div class="k">Masuk</div><div class="v" id="statIn">Rp 0</div></div>
+      <div class="stat out"><div class="k">Keluar</div><div class="v" id="statOut">Rp 0</div></div>
+      <div class="stat budget" id="statBudgetWrap"><div class="k">Budget</div><div class="v" id="statBudget">—</div></div>
+    </div>
+
+    <form id="txForm">
+      <div class="row1">
+        <div class="toggle-type">
+          <button type="button" data-type="masuk" class="active">+ Masuk</button>
+          <button type="button" data-type="keluar">− Keluar</button>
+        </div>
+        <input id="amount" type="number" min="0" placeholder="Jumlah (Rp)" required>
+        <input id="note" type="text" placeholder="Catatan (mis. Makan siang warteg)" required>
+      </div>
+      <div class="row2">
+        <select id="category" class="field"></select>
+        <input id="dateInput" type="date">
+        <button id="addBtn" type="submit">Catat</button>
+      </div>
+    </form>
+
+    <div class="budget-set" id="budgetSetRow">
+      <span>Atur batas budget bulan ini:</span>
+      <input id="budgetInput" type="number" min="0" placeholder="mis. 800000">
+      <button id="saveBudgetBtn" type="button">Simpan</button>
+    </div>
+
+    <div class="ledger">
+      <h3>Riwayat transaksi</h3>
+      <div class="filters" id="filterRow"></div>
+      <div id="txList"></div>
+    </div>
+
+    <div class="cat-section">
+      <h3>Rincian pengeluaran</h3>
+      <div id="tallyList"></div>
+    </div>
+
+    <footer class="foot">dicatat &amp; disimpan otomatis di perangkat ini</footer>
+  </div>
+</div>
+
+<script>
+const CATEGORIES = ["Makan","Kost & Listrik","Transport","Jajan/Nongkrong","Kuliah/Print","Laundry","Pulsa/Kuota","Lainnya"];
+const STORAGE_KEY = 'saku:transactions';
+const BUDGET_KEY = 'saku:budgets';
+
+let state = { transactions: [], budgets: {}, filter: 'semua' };
+  // dashboard will be initialized only after login
+let dashboardEnabled = false;
+let currentMonth = new Date().toISOString().slice(0,7);
+
+function setDashboardLocked(locked){
+  const form = document.getElementById('txForm');
+  const budgetRow = document.getElementById('budgetSetRow');
+  const logoutBtn = document.getElementById('logoutBtn');
+  if(form){ form.querySelectorAll('input, select, button').forEach(el => el.disabled = locked); }
+  if(budgetRow){ budgetRow.querySelectorAll('input, button').forEach(el => el.disabled = locked); }
+  const book = document.querySelector('.book');
+  if(book){
+    book.style.opacity = locked ? '0.35' : '1';
+    book.style.pointerEvents = locked ? 'none' : 'auto';
+  }
+  if(logoutBtn){ logoutBtn.style.display = locked ? 'none' : 'inline-flex'; }
+  dashboardEnabled = !locked;
+}
+
+
+function fmtRp(n){
+  const sign = n < 0 ? '-' : '';
+  return sign + 'Rp ' + Math.abs(Math.round(n)).toLocaleString('id-ID');
+}
+
+async function loadData(){
+  try{
+    const tx = await window.storage.get(STORAGE_KEY);
+    state.transactions = tx ? JSON.parse(tx.value) : [];
+  }catch(e){ state.transactions = []; }
+  try{
+    const bg = await window.storage.get(BUDGET_KEY);
+    state.budgets = bg ? JSON.parse(bg.value) : {};
+  }catch(e){ state.budgets = {}; }
+}
+
+async function saveTransactions(){
+  try{ await window.storage.set(STORAGE_KEY, JSON.stringify(state.transactions)); }
+  catch(e){ console.error('gagal menyimpan transaksi', e); }
+}
+async function saveBudgets(){
+  try{ await window.storage.set(BUDGET_KEY, JSON.stringify(state.budgets)); }
+  catch(e){ console.error('gagal menyimpan budget', e); }
+}
+
+function populateMonthSelect(){
+  const months = new Set(state.transactions.map(t => t.date.slice(0,7)));
+  const [yearStr, monthStr] = currentMonth.split('-');
+  const base = new Date(Number(yearStr), Number(monthStr) - 1, 1);
+
+  const startYear = 2024;
+  const endYear = 2030;
+  for (let year = startYear; year <= endYear; year++) {
+    for (let month = 0; month < 12; month++) {
+      const d = new Date(year, month, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      months.add(key);
+    }
+  }
+  months.add(currentMonth);
+
+  const sorted = Array.from(months).sort().reverse();
+  const sel = document.getElementById('monthSelect');
+  sel.innerHTML = sorted.map(m => {
+    const d = new Date(m + '-01');
+    const label = d.toLocaleDateString('id-ID', {month:'long', year:'numeric'});
+    return `<option value="${m}" ${m===currentMonth?'selected':''}>${label}</option>`;
+  }).join('');
+}
+
+function populateCategorySelect(){
+  document.getElementById('category').innerHTML = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+function populateFilters(){
+  const row = document.getElementById('filterRow');
+  const cats = ['semua', ...CATEGORIES];
+  row.innerHTML = cats.map(c => `<button data-filter="${c}" class="${state.filter===c?'active':''}">${c}</button>`).join('');
+  row.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => { state.filter = btn.dataset.filter; render(); });
+  });
+}
+
+function monthTx(){
+  return state.transactions.filter(t => t.date.slice(0,7) === currentMonth);
+}
+
+function render(){
+  const txThisMonth = monthTx();
+  const income = txThisMonth.filter(t=>t.type==='masuk').reduce((s,t)=>s+t.amount,0);
+  const expense = txThisMonth.filter(t=>t.type==='keluar').reduce((s,t)=>s+t.amount,0);
+  const balance = income - expense;
+
+  document.getElementById('statIn').textContent = fmtRp(income);
+  document.getElementById('statOut').textContent = fmtRp(expense);
+  const balEl = document.getElementById('balanceAmt');
+  balEl.textContent = fmtRp(balance);
+  balEl.classList.toggle('neg', balance < 0);
+
+  const budget = state.budgets[currentMonth];
+  const budgetEl = document.getElementById('statBudget');
+  const wrap = document.getElementById('statBudgetWrap');
+  if(budget){
+    budgetEl.textContent = fmtRp(budget - expense) + ' sisa';
+    wrap.classList.toggle('over', expense > budget);
+  } else {
+    budgetEl.textContent = '—';
+    wrap.classList.remove('over');
+  }
+  document.getElementById('budgetInput').value = budget || '';
+
+  const pct = budget ? Math.min(expense / budget, 1) : (income ? Math.min(expense/income,1) : 0);
+  const circumference = 251;
+  const offset = circumference - (pct * circumference);
+  const arc = document.getElementById('gaugeArc');
+  arc.setAttribute('stroke-dashoffset', offset);
+  arc.setAttribute('stroke', pct >= 1 ? '#B5533C' : pct > 0.75 ? '#B98B4E' : '#4F7A5C');
+  document.getElementById('gaugeLabel').textContent = Math.round(pct*100) + '%';
+
+  const filtered = state.filter === 'semua' ? txThisMonth : txThisMonth.filter(t => t.category === state.filter);
+  const sorted = [...filtered].sort((a,b) => b.date.localeCompare(a.date) || b.id - a.id);
+  const listEl = document.getElementById('txList');
+  if(sorted.length === 0){
+    listEl.innerHTML = `<div class="empty-state"><span class="hand">belum ada catatan</span>Tambahkan transaksi pertama bulan ini di atas.</div>`;
+  } else {
+    listEl.innerHTML = sorted.map(t => {
+      const d = new Date(t.date);
+      const dd = d.toLocaleDateString('id-ID', {day:'2-digit', month:'short'});
+      return `<div class="tx-row">
+        <div class="tx-date">${dd}</div>
+        <div class="tx-mid">
+          <div class="tx-note">${escapeHtml(t.note)}</div>
+          <div class="tx-cat">${t.category}</div>
+        </div>
+        <div class="tx-amt ${t.type==='masuk'?'in':'out'}">${t.type==='masuk'?'+':'-'}${fmtRp(t.amount)}</div>
+        <button class="tx-del" data-id="${t.id}" aria-label="Hapus transaksi">✕</button>
+      </div>`;
+    }).join('');
+    listEl.querySelectorAll('.tx-del').forEach(btn => {
+      btn.addEventListener('click', () => deleteTx(Number(btn.dataset.id)));
+    });
+  }
+
+  const catTotals = {};
+  txThisMonth.filter(t=>t.type==='keluar').forEach(t => {
+    catTotals[t.category] = (catTotals[t.category]||0) + t.amount;
+  });
+  const maxCat = Math.max(1, ...Object.values(catTotals));
+  const tallyEl = document.getElementById('tallyList');
+  const entries = Object.entries(catTotals).sort((a,b)=>b[1]-a[1]);
+  if(entries.length === 0){
+    tallyEl.innerHTML = `<div class="empty-state">Belum ada pengeluaran bulan ini.</div>`;
+  } else {
+    tallyEl.innerHTML = entries.map(([cat, total]) => `
+      <div class="tally-row">
+        <div class="tally-top"><span class="name">${cat}</span><span class="amt">${fmtRp(total)}</span></div>
+        <div class="tally-bar"><div class="tally-fill" style="width:${(total/maxCat*100).toFixed(0)}%"></div></div>
+      </div>
+    `).join('');
+  }
+
+  populateFilters();
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+async function deleteTx(id){
+  state.transactions = state.transactions.filter(t => t.id !== id);
+  await saveTransactions();
+  render();
+}
+
+function setup(){
+  document.getElementById('dateInput').value = new Date().toISOString().slice(0,10);
+  populateCategorySelect();
+  populateMonthSelect();
+
+  let activeType = 'masuk';
+  document.querySelectorAll('.toggle-type button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.toggle-type button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      activeType = btn.dataset.type;
+    });
+  });
+
+  document.getElementById('monthSelect').addEventListener('change', (e) => {
+    currentMonth = e.target.value;
+    render();
+  });
+
+  document.getElementById('txForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const amount = Number(document.getElementById('amount').value);
+    const note = document.getElementById('note').value.trim();
+    const category = document.getElementById('category').value;
+    const date = document.getElementById('dateInput').value || new Date().toISOString().slice(0,10);
+    if(!amount || !note) return;
+
+    state.transactions.push({
+      id: Date.now(),
+      type: activeType,
+      amount, note, category, date
+    });
+    await saveTransactions();
+    document.getElementById('amount').value = '';
+    document.getElementById('note').value = '';
+    currentMonth = date.slice(0,7);
+    populateMonthSelect();
+    render();
+  });
+
+  document.getElementById('saveBudgetBtn').addEventListener('click', async () => {
+    const val = Number(document.getElementById('budgetInput').value);
+    if(val > 0){ state.budgets[currentMonth] = val; }
+    else { delete state.budgets[currentMonth]; }
+    await saveBudgets();
+    render();
+  });
+}
+
+const AUTH_KEY = 'saku:auth';
+const SESSION_KEY = 'saku:session';
+
+function getAuthStored(){
+  try{
+    return JSON.parse(localStorage.getItem(AUTH_KEY) || 'null');
+  }catch(e){
+    return null;
+  }
+}
+
+function setAuthStored(obj){
+  localStorage.setItem(AUTH_KEY, JSON.stringify(obj));
+}
+
+function getSession(){
+  try{
+    return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+  }catch(e){
+    return null;
+  }
+}
+
+function setSession(obj){
+  localStorage.setItem(SESSION_KEY, JSON.stringify(obj));
+}
+
+function clearSession(){
+  localStorage.removeItem(SESSION_KEY);
+}
+
+async function sha256Hex(str){
+  const enc = new TextEncoder();
+  const buf = await crypto.subtle.digest('SHA-256', enc.encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function initAuth(){
+  const overlay = document.getElementById('authOverlay');
+  const authError = document.getElementById('authError');
+  const authForm = document.getElementById('authForm');
+  const signupPasswordRow = document.getElementById('signupPasswordRow');
+
+  const tabLogin = document.getElementById('tabLogin');
+  const tabSignup = document.getElementById('tabSignup');
+  const authUsername = document.getElementById('authUsername');
+  const authPassword = document.getElementById('authPassword');
+  const authPassword2 = document.getElementById('authPassword2');
+
+  function setError(msg){
+    if(!msg){
+      authError.style.display = 'none';
+      authError.textContent = '';
+      return;
+    }
+    authError.style.display = 'block';
+    authError.textContent = msg;
+  }
+
+  function setMode(mode){
+    const isSignup = mode === 'signup';
+    signupPasswordRow.style.display = isSignup ? 'block' : 'none';
+
+    tabLogin.style.background = isSignup ? 'transparent' : 'var(--paper-white)';
+    tabLogin.style.borderColor = 'var(--line)';
+    tabLogin.style.color = isSignup ? '#8a8272' : 'var(--teal)';
+
+    tabSignup.style.background = isSignup ? 'var(--paper-white)' : 'transparent';
+    tabSignup.style.borderColor = 'var(--line)';
+    tabSignup.style.color = isSignup ? 'var(--teal)' : '#8a8272';
+
+    document.getElementById('authSubmitBtn').textContent = isSignup ? 'Buat Akun' : 'Masuk';
+    setError('');
+  }
+
+  // Default: jika belum ada akun => paksa signup
+  const stored = getAuthStored();
+  const initialMode = stored ? 'login' : 'signup';
+  setMode(initialMode);
+  if(!stored){
+    tabLogin.disabled = true;
+    tabLogin.style.opacity = '0.6';
+    tabSignup.disabled = false;
+  }
+
+  tabLogin.addEventListener('click', () => {
+    const st = getAuthStored();
+    if(!st) return;
+    tabLogin.disabled = false;
+    setMode('login');
+  });
+
+  tabSignup.addEventListener('click', () => {
+    setMode('signup');
+  });
+
+  authForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    setError('');
+
+    const mode = signupPasswordRow.style.display === 'block' ? 'signup' : 'login';
+    const username = (authUsername.value || '').trim();
+    const pass1 = authPassword.value || '';
+    const pass2 = authPassword2 && authPassword2.value ? authPassword2.value : '';
+
+    if(mode === 'signup'){
+      if(!username) return setError('Username wajib diisi.');
+      if(!pass1 || pass1.length < 4) return setError('Password minimal 4 karakter.');
+      if(pass1 !== pass2) return setError('Ulangi password tidak sama.');
+
+      const salt = (crypto.getRandomValues(new Uint8Array(16)));
+      const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2,'0')).join('');
+      const passHash = await sha256Hex(saltHex + ':' + pass1);
+
+      setAuthStored({
+        username,
+        salt: saltHex,
+        passHash,
+        createdAt: Date.now()
+      });
+
+      // auto-login after signup
+      setSession({ username, loginAt: Date.now() });
+
+      overlay.style.display = 'none';
+      enableDashboard();
+      // initAuth ini dipanggil sebelum loadData/setup/render, jadi initAuth cukup return true.
+      return;
+    }
+
+    // login
+    const currentAuth = getAuthStored();
+    if(!currentAuth) return setError('Belum ada akun. Silakan buat akun dulu.');
+
+    const passHash = await sha256Hex(currentAuth.salt + ':' + pass1);
+    if(username !== currentAuth.username) return setError('Username atau password salah.');
+    if(passHash !== currentAuth.passHash) return setError('Username atau password salah.');
+
+    setSession({ username, loginAt: Date.now() });
+    overlay.style.display = 'none';
+    enableDashboard();
+  });
+
+  document.getElementById('authCancelBtn').addEventListener('click', () => {
+    const st = getAuthStored();
+    setError('');
+    if(st){
+      setMode('login');
+    }else{
+      setMode('signup');
+    }
+  });
+
+  // logout button (create if not exists)
+  function ensureLogoutBtn(){
+    let btn = document.getElementById('logoutBtn');
+    if(!btn){
+      btn = document.createElement('button');
+      btn.id = 'logoutBtn';
+      btn.type = 'button';
+      btn.textContent = 'Logout';
+      btn.style.border = '1px solid var(--line)';
+      btn.style.background = 'var(--paper-white)';
+      btn.style.color = '#8a8272';
+      btn.style.padding = '8px 12px';
+      btn.style.borderRadius = '8px';
+      btn.style.cursor = 'pointer';
+      btn.style.fontFamily = 'Plus Jakarta Sans';
+      btn.style.fontWeight = '800';
+      btn.style.fontSize = '12.5px';
+      btn.style.margin = '0 26px 14px';
+      btn.style.display = 'none';
+      const header = document.querySelector('header.top');
+      header && header.insertAdjacentElement('afterend', btn);
+
+      btn.addEventListener('click', () => {
+        clearSession();
+        setDashboardLocked(true);
+        overlay.style.display = 'flex';
+        setError('');
+        authUsername.value = '';
+        authPassword.value = '';
+        if(authPassword2) authPassword2.value = '';
+        // mode sesuai keberadaan akun
+        const st = getAuthStored();
+        setMode(st ? 'login' : 'signup');
+      });
+    }
+    return btn;
+  }
+
+  let canEnable = false;
+  function enableDashboard(){
+    canEnable = true;
+    const logoutBtn = ensureLogoutBtn();
+    logoutBtn.style.display = 'inline-flex';
+    setDashboardLocked(false);
+  }
+
+  function disableDashboard(){
+    canEnable = false;
+    const logoutBtn = ensureLogoutBtn();
+    logoutBtn.style.display = 'none';
+    setDashboardLocked(true);
+  }
+
+  // default disable until authenticated
+  disableDashboard();
+
+  const sess = getSession();
+  if(sess && stored){
+    // simple check: session exists (username stored is enough)
+    overlay.style.display = 'none';
+    enableDashboard();
+    return true;
+  }
+
+  overlay.style.display = 'flex';
+  // after successful login, we just hide overlay; caller will already have disabled dashboard. 
+  return false;
+}
+
+function waitForAuthAndUnlockOnce(){
+  return new Promise((resolve) => {
+    const check = setInterval(() => {
+      // unlocked when overlay hidden and logout button visible
+      const overlay = document.getElementById('authOverlay');
+      const logoutBtn = document.getElementById('logoutBtn');
+      if(overlay && overlay.style.display === 'none' && logoutBtn && logoutBtn.style.display !== 'none'){
+        clearInterval(check);
+        resolve(true);
+      }
+    }, 200);
+  });
+}
+
+(async function init(){
+  // start locked
+  setDashboardLocked(true);
+
+  const authReady = await initAuth();
+  if(authReady){
+    await loadData();
+    setup();
+    render();
+    return;
+  }
+
+  // wait user login/signup
+  await waitForAuthAndUnlockOnce();
+  await loadData();
+  setup();
+  render();
+})();
+</script>
+</body>
+</html>
