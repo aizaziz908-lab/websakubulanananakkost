@@ -4,9 +4,8 @@ Aplikasi catatan uang saku sederhana berbasis HTML/CSS/JavaScript.
 
 ## Repository GitHub
 
-- Repository: https://github.com/m.aziz/websakubulanananakkost
-- GitHub Pages: https://m.aziz.github.io/websakubulanananakkost/
-
+- Repository: [https://github.com/aizaziz908-lab/websakubulanananakkost](https://github.com/aizaziz908-lab/websakubulanananakkost)
+- GitHub Pages: [https://aizaziz908-lab.github.io/websakubulanananakkost/](https://aizaziz908-lab.github.io/websakubulanananakkost/)
 ## Cara deploy ke GitHub Pages
 
 1. Buat repository GitHub baru.
@@ -19,5 +18,5 @@ Aplikasi catatan uang saku sederhana berbasis HTML/CSS/JavaScript.
 
 Buka aplikasi di:
 - https://m.aziz.github.io/websakubulanananakkost/
-
+- [https://aizaziz908-lab.github.io/websakubulanananakkost/](https://aizaziz908-lab.github.io/websakubulanananakkost/)
 File utama: `index.html`
